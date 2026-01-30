@@ -1,0 +1,39 @@
+name: Build Mastodon APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.0
+          bundler-cache: true
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Gradle environment
+        run: |
+          echo "apply from: 'ci_signing.gradle'" >> mastodon/build.gradle
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mastodon-release.apk
+          path: mastodon/build/outputs/apk/release/mastodon-release.apk
